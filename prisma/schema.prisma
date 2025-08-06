@@ -1,0 +1,90 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  clients Client[]
+  
+  @@map("users")
+}
+
+model Client {
+  id          String   @id @default(cuid())
+  name        String
+  email       String
+  company     String?
+  subdomain   String   @unique
+  brandColor  String   @default("#3B82F6")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  userId   String
+  user     User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  projects Project[]
+  files    File[]
+  
+  @@map("clients")
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  status      String   @default("active") // active, completed, paused
+  startDate   DateTime @default(now())
+  endDate     DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  updates Update[]
+  files   File[]
+  
+  @@map("projects")
+}
+
+model Update {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  type      String   @default("progress") // progress, milestone, issue
+  createdAt DateTime @default(now())
+
+  projectId String
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  @@map("updates")
+}
+
+model File {
+  id          String   @id @default(cuid())
+  name        String
+  originalName String
+  size        Int
+  mimeType    String
+  url         String
+  version     Int      @default(1)
+  createdAt   DateTime @default(now())
+
+  clientId  String
+  client    Client  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  
+  @@map("files")
+}
